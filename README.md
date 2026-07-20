@@ -1,4 +1,3 @@
-Ось переклад вашого README-файлу англійською мовою з повним збереженням розмітки:
 
 ```markdown
 # BetBot — Telegram Bot for Betting with Virtual Currency
@@ -74,9 +73,5 @@ betbot/
 │   ├── results.py            # /mybets
 │   └── admin.py               # /update_matches, /check_results
 └── keyboards.py             # inline keyboards
-
-```
-
-```
 
 ```
