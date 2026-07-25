@@ -1,18 +1,18 @@
 
 ```python
 """
-Модуль конфігурації BetBot.
+BetBot Configuration Module.
 
-Зчитує змінні середовища з файлу .env та задає основні налаштування бота.
+Reads environment variables from the .env file and sets core application settings.
 
 ===============================================================================
-АРХІТЕКТУРА ТА ЛОГІКА РОБОТИ (Mermaid)
+SYSTEM ARCHITECTURE & LOGIC (Mermaid)
 ===============================================================================
 
-1. Загальна архітектура системи:
+1. High-Level Architecture Diagram:
 ```mermaid
 graph TD
-    A[Користувач Telegram] <-->|Повідомлення / Команди| B[Telegram Bot API]
+    A[Telegram User] <-->|Messages / Commands| B[Telegram Bot API]
     B <-->|Bot Framework| C[BetBot Core Application]
     
     subgraph Core Application
@@ -27,7 +27,7 @@ graph TD
 
 ```
 
-2. Схема даних (ER Diagram):
+2. Entity Relationship Diagram (ERD):
 
 ```mermaid
 erDiagram
@@ -37,7 +37,7 @@ erDiagram
     USERS {
         int telegram_id PK
         string username
-        decimal virtual_balance "Початковий: 1000 шекалІІІ"
+        decimal virtual_balance "Initial: 1000 shekels"
         datetime created_at
     }
 
@@ -70,41 +70,41 @@ erDiagram
 import os
 from dotenv import load_dotenv
 
-# Завантаження змінних оточення з .env
+# Load environment variables from .env file
 
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ODDS_API_KEY = os.getenv("ODDS_API_KEY")
 
-# Telegram ID адміністраторів через кому в .env, наприклад: ADMIN_IDS=123456789,987654321
+# Comma-separated Admin Telegram IDs in .env, e.g.: ADMIN_IDS=123456789,987654321
 
 _admin_ids_raw = os.getenv("ADMIN_IDS", "")
 ADMIN_IDS = [int(x.strip()) for x in _admin_ids_raw.split(",") if x.strip()]
 
 START_BALANCE = 1000
 
-CURRENCY_NAME = "шекалІІІ"
+CURRENCY_NAME = "shekels"
 
-# Шлях до файлу бази даних SQLite
+# Path to the SQLite database file
 
 DB_PATH = "betbot.db"
 
-# Який вид спорту тягнути з The Odds API за замовчуванням.
+# Default sport key fetched from The Odds API.
 
-# Список ключів спорту дивись тут: https://the-odds-api.com/sports-odds-data/sports-apis.html
+# See available sport keys here: https://the-odds-api.com/sports-odds-data/sports-apis.html
 
-# soccer_fifa_world_cup — ЧМ, можна змінити/розширити пізніше
+# soccer_fifa_world_cup — World Cup, can be changed/extended later
 
 DEFAULT_SPORT_KEY = "soccer_fifa_world_cup"
 
-# Регіон букмекерів, коефіцієнти яких тягнемо (eu — європейські контори)
+# Bookmaker region to fetch odds for (eu — European bookmakers)
 
 ODDS_REGION = "eu"
 
 if not BOT_TOKEN:
 raise RuntimeError(
-"BOT_TOKEN не знайдено. Створи файл .env на основі .env.example і впиши туди токен бота."
+"BOT_TOKEN not found. Create a .env file based on .env.example and add your bot token."
 )
 
 ```
