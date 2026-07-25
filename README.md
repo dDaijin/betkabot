@@ -1,77 +1,112 @@
 
-```markdown
-# BetBot - Telegram Bot for Betting with Virtual Currency
+```python
+"""
+Модуль конфігурації BetBot.
 
-A bot to play: bet on sports events without real money.
-Odds are fetched from [The Odds API](https://the-odds-api.com/).
+Зчитує змінні середовища з файлу .env та задає основні налаштування бота.
 
-## Installation
+===============================================================================
+АРХІТЕКТУРА ТА ЛОГІКА РОБОТИ (Mermaid)
+===============================================================================
 
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
+1. Загальна архітектура системи:
+```mermaid
+graph TD
+    A[Користувач Telegram] <-->|Повідомлення / Команди| B[Telegram Bot API]
+    B <-->|Bot Framework| C[BetBot Core Application]
+    
+    subgraph Core Application
+        C --> D[Handlers / Controllers]
+        D --> E[Betting Service]
+        D --> F[Odds API Client]
+        D --> G[Database Layer]
+    end
 
-```
-
-2. Copy `.env.example` to `.env` and fill it out:
-```bash
-cp .env.example .env
-
-```
-
-
-* `BOT_TOKEN` - get it from [@BotFather](https://t.me/BotFather) (`/newbot`)
-* `ODDS_API_KEY` - get it for free at [the-odds-api.com](https://the-odds-api.com/) (500 requests/month free)
-* `ADMIN_IDS` - your telegram_id (can be found via [@userinfobot](https://t.me/userinfobot)), separated by commas if there are multiple admins
-
-
-3. Run the bot:
-```bash
-python bot.py
+    F <-->|HTTP Requests| H[External Odds API]
+    G <-->|CRUD Operations| I[(SQLite DB: betbot.db)]
 
 ```
 
-## How to Use
+2. Схема даних (ER Diagram):
 
-**Regular User:**
+```mermaid
+erDiagram
+    USERS ||--o{ BETS : places
+    MATCHES ||--o{ BETS : targets
 
-* `/start` - registration, gives a starting balance (1000 coins)
-* `/matches` - list of upcoming matches with odds, allows making a bet
-* `/balance` - current balance
-* `/mybets` - your betting history
-* `/leaderboard` - leaderboard among all players
+    USERS {
+        int telegram_id PK
+        string username
+        decimal virtual_balance "Початковий: 1000 шекалІІІ"
+        datetime created_at
+    }
 
-**Administrator (telegram_id from ADMIN_IDS):**
+    BETS {
+        int id PK
+        int user_id FK
+        int match_id FK
+        string selected_outcome
+        decimal odds
+        decimal bet_amount
+        string status "pending / won / lost"
+        datetime created_at
+    }
 
-* `/update_matches` - fetch fresh matches and odds from The Odds API
-* `/check_results` - check results of finished matches and automatically calculate bets
-
-## Future Enhancements / To-Do
-
-* Automate `/update_matches` and `/check_results` on a schedule (using `apscheduler` or cron) so you don't have to trigger them manually
-* Add more sports - change/expand `DEFAULT_SPORT_KEY` in `config.py` (list of keys: https://the-odds-api.com/sports-odds-data/sports-apis.html)
-* Allow choosing a league/sport directly inside the bot, rather than relying only on the default one from the config
-* Prevent betting on matches that have already started (compare `commence_time` with current time before confirming a bet)
-* Set minimum/maximum bet limits
-
-## Project Structure
+    MATCHES {
+        int id PK
+        string external_match_id
+        string home_team
+        string away_team
+        datetime start_time
+        string status "upcoming / finished"
+        string result
+    }
 
 ```
-betbot/
-├── bot.py                 # entry point
-├── config.py               # settings from .env
-├── database/
-│   ├── models.py           # User, Event, Bet models
-│   └── db.py                # DB connection and operations
-├── services/
-│   ├── odds_api.py          # requests to The Odds API
-│   └── betting.py           # bet calculation, payouts
-├── handlers/
-│   ├── start.py              # /start, /balance, /leaderboard
-│   ├── events.py             # /matches, viewing a match
-│   ├── bets.py                # placing a bet
-│   ├── results.py            # /mybets
-│   └── admin.py               # /update_matches, /check_results
-└── keyboards.py             # inline keyboards
+
+===============================================================================
+"""
+
+import os
+from dotenv import load_dotenv
+
+# Завантаження змінних оточення з .env
+
+load_dotenv()
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ODDS_API_KEY = os.getenv("ODDS_API_KEY")
+
+# Telegram ID адміністраторів через кому в .env, наприклад: ADMIN_IDS=123456789,987654321
+
+_admin_ids_raw = os.getenv("ADMIN_IDS", "")
+ADMIN_IDS = [int(x.strip()) for x in _admin_ids_raw.split(",") if x.strip()]
+
+START_BALANCE = 1000
+
+CURRENCY_NAME = "шекалІІІ"
+
+# Шлях до файлу бази даних SQLite
+
+DB_PATH = "betbot.db"
+
+# Який вид спорту тягнути з The Odds API за замовчуванням.
+
+# Список ключів спорту дивись тут: https://the-odds-api.com/sports-odds-data/sports-apis.html
+
+# soccer_fifa_world_cup — ЧМ, можна змінити/розширити пізніше
+
+DEFAULT_SPORT_KEY = "soccer_fifa_world_cup"
+
+# Регіон букмекерів, коефіцієнти яких тягнемо (eu — європейські контори)
+
+ODDS_REGION = "eu"
+
+if not BOT_TOKEN:
+raise RuntimeError(
+"BOT_TOKEN не знайдено. Створи файл .env на основі .env.example і впиши туди токен бота."
+)
+
+```
 
 ```
